@@ -35,7 +35,7 @@ class Buypass
     private $Receipt;
     private $XmlResults;
 
-    public function __construct($UserID, $GatewayID, $LiveURL, $test = self::USE_PRODUCTION_SERVER)
+    public function __construct($UserID, $GatewayID, $LiveURL, $TestURL, $test = self::USE_PRODUCTION_SERVER)
     {
         $this->UserID    = trim($UserID);
         $this->GatewayID = trim($GatewayID);
@@ -45,7 +45,7 @@ class Buypass
 
         $this->test = (bool) $test;
         if($this->test){
-            $this->url = 'http://dvrotsos2.kattare.com/vsg2/';
+            $this->url = $TestURL;
         }else{
             $this->url = $LiveURL;
         }
@@ -159,10 +159,7 @@ class Buypass
                     .'        <Platform>' . $this->params['Platform'] . '</Platform>'."\n"
                     .'        <UserId>' . $this->UserID . '</UserId>'."\n"
                     .'        <GID>' . $this->GatewayID . '</GID>'."\n"
-
-                    //Terminal identifier. Max Size: 11
-                    //.'        <Tid>' . $this->params['Tid'] . '</Tid>'."\n"
-
+                    .'        <Tid>' . @$this->params['Tid'] . '</Tid>'."\n"
                     .'    </MerchantData>'."\n"
                     .'    <CreateToken>'."\n"
                     .'        <AccountNumber>' . $this->params['AccountNumber'] . '</AccountNumber>'."\n"
@@ -190,10 +187,7 @@ class Buypass
                     .'        <Platform>' . $this->params['Platform'] . '</Platform>'."\n"
                     .'        <UserId>' . $this->UserID . '</UserId>'."\n"
                     .'        <GID>' . $this->GatewayID . '</GID>'."\n"
-
-                    //Terminal identifier. Max Size: 11
-                    //.'        <Tid>' . $this->params['Tid'] . '</Tid>'."\n"
-
+                    .'        <Tid>' . @$this->params['Tid'] . '</Tid>'."\n"
                     .'    </MerchantData>'."\n"
                     .'    <DeleteToken>'."\n"
                     .'        <Token>' . $this->params['Token'] . '</Token>'."\n"
@@ -210,10 +204,7 @@ class Buypass
                     .'        <Platform>' . $this->params['Platform'] . '</Platform>'."\n"
                     .'        <UserId>' . $this->UserID . '</UserId>'."\n"
                     .'        <GID>' . $this->GatewayID . '</GID>'."\n"
-
-                    //Terminal identifier. Max Size: 11
-                    //.'        <Tid>' . $this->params['Tid'] . '</Tid>'."\n"
-
+                    .'        <Tid>' . @$this->params['Tid'] . '</Tid>'."\n"
                     .'    </MerchantData>'."\n"
                     .'    <ProcessPayment>'."\n"
                     .'        <Amount>' . $this->params['Amount'] . '</Amount>'."\n"
@@ -251,10 +242,7 @@ class Buypass
                     .'        <Platform>' . $this->params['Platform'] . '</Platform>'."\n"
                     .'        <UserId>' . $this->UserID . '</UserId>'."\n"
                     .'        <GID>' . $this->GatewayID . '</GID>'."\n"
-
-                    //Terminal identifier. Max Size: 11
-                    //.'        <Tid>' . $this->params['Tid'] . '</Tid>'."\n"
-
+                    .'        <Tid>' . @$this->params['Tid'] . '</Tid>'."\n"
                     .'    </MerchantData>'."\n"
                     .'    <ProcessRefund>'."\n"
                     .'        <Amount>' . $this->params['Amount'] . '</Amount>'."\n"

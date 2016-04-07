@@ -26,19 +26,29 @@ class PluginBuypass extends GatewayPlugin
                 'description'   => lang('Please enter your Buypass Gateway ID here.'),
                 'value'         => ''
             ),
+            lang('Buypass Terminal ID') => array (
+                'type'          => 'text',
+                'description'   => lang('Please enter your Buypass Terminal ID here.</br>Max Size: 11'),
+                'value'         => ''
+            ),
             lang('Buypass Platform') => array (
                 'type'          => 'text',
                 'description'   => lang('Please enter your Buypass Platform here.</br>Identifies the platform to perform transaction processing.</br>Max Size: 11'),
-                'value'         => 'buypass'
+                'value'         => ''
             ),
             lang('Buypass Application ID') => array (
                 'type'          => 'text',
                 'description'   => lang('Please enter your Buypass Application ID here.</br>Application identifier for the application used in sending/receiving transaction request.</br>The value of this field is assigned/authorized by the gateway and must be used in all transactions used by the certified application.</br>Max Size: 20'),
-                'value'         => 'WASHOST'
+                'value'         => ''
             ),
             lang('Buypass Live URL') => array (
                 'type'          => 'text',
                 'description'   => lang('Please enter your Buypass Live URL here.'),
+                'value'         => ''
+            ),
+            lang('Buypass Test URL') => array (
+                'type'          => 'text',
+                'description'   => lang('Please enter your Buypass Test URL here.'),
                 'value'         => ''
             ),
             lang('Buypass Test Mode') => array (
@@ -148,14 +158,20 @@ class PluginBuypass extends GatewayPlugin
         $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
         $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
         $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
+        $TestURL = $this->settings->get('plugin_buypass_Buypass Test URL');
         $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
         $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
+        $TerminalID = $this->settings->get('plugin_buypass_Buypass Terminal ID');
         $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
         $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
         try{
             // Process the transaction
-            $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $USE_DEVELOPMENT_SERVER);
+            $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
+
+            //Max Size: 11
+            //Terminal identifier.
+            $buypass->setParameter('Tid', $TerminalID, 11);
 
             //Max Size: 11
             //Identifies the platform to perform transaction processing.
@@ -273,14 +289,20 @@ class PluginBuypass extends GatewayPlugin
             $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
             $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
             $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
+            $TestURL = $this->settings->get('plugin_buypass_Buypass Test URL');
             $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
             $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
+            $TerminalID = $this->settings->get('plugin_buypass_Buypass Terminal ID');
             $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
             $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
             try{
                 // Process the transaction
-                $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $USE_DEVELOPMENT_SERVER);
+                $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
+
+                //Max Size: 11
+                //Terminal identifier.
+                $buypass->setParameter('Tid', $TerminalID, 11);
 
                 //Max Size: 11
                 //Identifies the platform to perform transaction processing.
@@ -331,13 +353,6 @@ class PluginBuypass extends GatewayPlugin
     //Get customer Buypass profile
     function getCustomerProfile($params)
     {
-        //Buypass Credentials from CE plugin
-        $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
-        $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
-        $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
-        $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
-        $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
-
         $profile_id == '';
         $Billing_Profile_ID = '';
         $profile_id_array = array();
@@ -379,14 +394,20 @@ class PluginBuypass extends GatewayPlugin
         $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
         $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
         $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
+        $TestURL = $this->settings->get('plugin_buypass_Buypass Test URL');
         $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
         $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
+        $TerminalID = $this->settings->get('plugin_buypass_Buypass Terminal ID');
         $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
         $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
         try{
             // Process the transaction
-            $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $USE_DEVELOPMENT_SERVER);
+            $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
+
+            //Max Size: 11
+            //Terminal identifier.
+            $buypass->setParameter('Tid', $TerminalID, 11);
 
             //Max Size: 11
             //Identifies the platform to perform transaction processing.
