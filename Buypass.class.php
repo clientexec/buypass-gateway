@@ -13,27 +13,27 @@ class Buypass
     private $success = false;
     private $error   = true;
 
-    private $UserID;
-    private $GatewayID;
-    private $xml;
-    private $ch;
-    private $response;
-    private $url;
-    private $requesturl;
-    private $Status;
-    private $Token;
-    private $ResultMessage;
-    private $ResultCode;
-    private $ResponseCode;
-    private $AuthIdentificationResponse;
-    private $AdditionalResponseData;
-    private $ReferenceNumber;
-    private $TransactionAmount;
-    private $TransactionDate;
-    private $AvsResponse;
-    private $CvvResponse;
-    private $Receipt;
-    private $XmlResults;
+    private $UserID = '';
+    private $GatewayID = '';
+    private $xml = '';
+    private $ch = '';
+    private $response = '';
+    private $url = '';
+    private $requesturl = '';
+    private $Status = '';
+    private $Token = '';
+    private $ResultMessage = '';
+    private $ResultCode = '';
+    private $ResponseCode = '';
+    private $AuthIdentificationResponse = '';
+    private $AdditionalResponseData = '';
+    private $ReferenceNumber = '';
+    private $TransactionAmount = '';
+    private $TransactionDate = '';
+    private $AvsResponse = '';
+    private $CvvResponse = '';
+    private $Receipt = '';
+    private $XmlResults = '';
 
     public function __construct($UserID, $GatewayID, $LiveURL, $TestURL, $test = self::USE_PRODUCTION_SERVER)
     {
