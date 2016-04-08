@@ -96,7 +96,7 @@ class Buypass
             $output .= '<td>' . $value . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        if(!empty($this->url.$this->requesturl)){
+        if(!empty($this->url) || !empty($this->requesturl)){
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>URL</b></td>';
             $output .= '<td>' . htmlentities($this->url.$this->requesturl) . '</td>' . "\n" . '</tr>' . "\n";
         }
