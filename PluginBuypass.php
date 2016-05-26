@@ -137,16 +137,34 @@ class PluginBuypass extends GatewayPlugin
         //Create customer Buypass profile transaction
         $customerProfile = $this->createCustomerProfileTransaction($params, $isRefund);
         if($customerProfile['error']){
-            $cPlugin->PaymentRejected($this->user->lang("There was an error performing this operation. ".$customerProfile['detail']));
-            return $this->user->lang("There was an error performing this operation. ".$customerProfile['detail']);
+            $cPlugin->PaymentRejected($this->user->lang("There was an error performing this operation.").' '.$customerProfile['detail']);
+            return $this->user->lang("There was an error performing this operation.").' '.$customerProfile['detail'];
         }else{
-            if($isRefund){
-                $cPlugin->PaymentAccepted($customerProfile['amount'], "Buypass refund of {$customerProfile['amount']} was successfully processed.", $customerProfile['ReferenceNumber']);
-                return array('AMOUNT' => $customerProfile['amount']);
+            // 00 - Approved or completed successfully
+            // 11 - Approved (VIP)
+            // 10 - Approved, partial amount approved
+            if(in_array($customerProfile['ResponseCode'], array('00', '11', '10'))){
+                if(in_array($customerProfile['ResponseCode'], array('00', '11'))){
+                    // 00 - Approved or completed successfully
+                    // 11 - Approved (VIP)
+                    $amount = $customerProfile['amount'];
+                }elseif($customerProfile['ResponseCode'] === '10'){
+                    // 10 - Approved, partial amount approved
+                    //Transaction's total amount in US dollars. Format assumes 2 decimal points.
+                    $amount = number_format((intval($customerProfile['TransactionAmount'])/100),2);
+                }
+
+                if($isRefund){
+                    $cPlugin->PaymentAccepted($amount, "Buypass refund of {$amount} was successfully processed.", $customerProfile['ReferenceNumber']);
+                    return array('AMOUNT' => $amount);
+                }else{
+                    $cPlugin->setTransactionID($customerProfile['ReferenceNumber']);
+                    $cPlugin->PaymentAccepted($amount, "Buypass payment of {$amount} was accepted. Auth Identification Response: {$customerProfile['AuthIdentificationResponse']}", $customerProfile['ReferenceNumber']);
+                    return '';
+                }
             }else{
-                $cPlugin->setTransactionID($customerProfile['ReferenceNumber']);
-                $cPlugin->PaymentAccepted($customerProfile['amount'], "Buypass payment of {$customerProfile['amount']} was accepted. Auth Identification Response: {$customerProfile['AuthIdentificationResponse']}", $customerProfile['ReferenceNumber']);
-                return '';
+                $cPlugin->PaymentRejected($this->user->lang("There was an error performing this operation.").' *Response Code: '.$customerProfile['ResponseCode']);
+                return $this->user->lang("There was an error performing this operation.").' *Response Code: '.$customerProfile['ResponseCode'];
             }
         }
     }
@@ -446,17 +464,26 @@ class PluginBuypass extends GatewayPlugin
 
             // Get the payment or refund profile ID returned from the request
             if($buypass->isSuccessful()){
-                    return array(
-                        'error'          => false,
+                return array(
+                    'error'                      => false,
 
-                        //Identifies the response identification assigned by the authorizing institution. Present only for approvals.
-                        'AuthIdentificationResponse'  => $buypass->getAuthIdentificationResponse(),
+                    //Identifies the response identification assigned by the authorizing institution. Present only for approvals.
+                    'AuthIdentificationResponse' => $buypass->getAuthIdentificationResponse(),
 
-                        ////Unique value identifying the transaction. Used to identify the transaction for void/reversals
-                        'ReferenceNumber' => $buypass->getReferenceNumber(),
+                    //Unique value identifying the transaction. Used to identify the transaction for void/reversals
+                    'ReferenceNumber'            => $buypass->getReferenceNumber(),
 
-                        'amount'         => $amount
-                    );
+                    //Identifies the disposition of a message. Refer to Appendix F in https://drive.google.com/file/d/0B-NTHmk-nv8FRVZSelBERnh2Y0U/view
+                    // 00 - Approved or completed successfully
+                    // 11 - Approved (VIP)
+                    // 10 - Approved, partial amount approved
+                    'ResponseCode'               => $buypass->getResponseCode(),
+
+                    //Identifies the transaction's total amount in US dollars. Format assumes 2 decimal points.
+                    'TransactionAmount'          => $buypass->getTransactionAmount(),
+
+                    'amount'                     => $amount
+                );
             }else{
                 //Result Code. Can have details of the error.
                 $ResultCode = $buypass->getResultCode();
