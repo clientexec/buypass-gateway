@@ -266,7 +266,7 @@ class PluginBuypass extends GatewayPlugin
                   $this->CustomerRemove($params);
                 }
                 break;
-            case 'delete':  // When deleting the customer or changing to use another gateway
+            case 'delete':  // When deleting the customer, changing to use another gateway, or updating the Credit Card
                 $this->CustomerRemove($params);
                 break;
         }
