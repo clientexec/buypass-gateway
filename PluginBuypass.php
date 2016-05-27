@@ -332,16 +332,15 @@ class PluginBuypass extends GatewayPlugin
 
                 $buypass->deleteToken();
 
+                if(is_array($profile_id_array)){
+                    unset($profile_id_array['buypass']);
+                }else{
+                    $profile_id_array = array();
+                }
+                $user->updateCustomTag('Billing-Profile-ID', serialize($profile_id_array));
+                $user->save();
+
                 if($buypass->isSuccessful()){
-                    if(is_array($profile_id_array)){
-                        unset($profile_id_array['buypass']);
-                    }else{
-                        $profile_id_array = array();
-                    }
-
-                    $user->updateCustomTag('Billing-Profile-ID', serialize($profile_id_array));
-                    $user->save();
-
                     return array(
                         'error'      => false,
                         'profile_id' => $profile_id
