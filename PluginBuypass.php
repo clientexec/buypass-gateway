@@ -58,7 +58,7 @@ class PluginBuypass extends GatewayPlugin
             ),
             lang('Invoice After Signup') => array (
                 'type'          => 'yesno',
-                'description'   => lang('Select YES if you want an invoice sent to the customer after signup is complete.'),
+                'description'   => lang('Select YES if you want an invoice sent to the client after signup is complete.'),
                 'value'         => '1'
             ),
             lang('Signup Name') => array (
@@ -73,13 +73,8 @@ class PluginBuypass extends GatewayPlugin
             ),
             lang('Dummy Plugin') => array (
                 'type'          => 'hidden',
-                'description'   => lang('1 = Only used to specify a billing type for a customer. 0 = full fledged plugin requiring complete functions'),
+                'description'   => lang('1 = Only used to specify a billing type for a client. 0 = full fledged plugin requiring complete functions'),
                 'value'         => '0'
-            ),
-            lang('Update Gateway') => array (
-                'type'        => 'hidden',
-                'description' => lang('1 = Create, update or remove Gateway customer information through the function UpdateGateway when customer choose to use this gateway, customer profile is updated, customer is deleted or customer status is changed. 0 = Do nothing.'),
-                'value'       => '1'
             ),
             lang('Accept CC Number') => array (
                 'type'          => 'hidden',
@@ -105,6 +100,16 @@ class PluginBuypass extends GatewayPlugin
                 'type'          => 'yesno',
                 'description'   => lang('Select YES to allow Discover card acceptance with this plugin. No will prevent this card type.'),
                 'value'         => '1'
+            ),
+            lang('Billing Profile ID') => array(
+                'type'        => 'hidden',
+                'description' => lang('Is this plugin storing a Billing-Profile-ID? 1 = YES, 0 = NO'),
+                'value'       => '1'
+            ),
+            lang('Update Gateway') => array (
+                'type'        => 'hidden',
+                'description' => lang('1 = Create, update or remove Gateway client information through the function UpdateGateway when client choose to use this gateway, client profile is updated, client is deleted or client status is changed. 0 = Do nothing.'),
+                'value'       => '1'
             )
         );
         return $variables;
@@ -129,40 +134,40 @@ class PluginBuypass extends GatewayPlugin
         if (isset($params['refund']) && $params['refund']) {
             $isRefund = true;
             $cPlugin->setAction('refund');
-        }else{
+        } else {
             $isRefund = false;
             $cPlugin->setAction('charge');
         }
 
         //Create customer Buypass profile transaction
         $customerProfile = $this->createCustomerProfileTransaction($params, $isRefund);
-        if($customerProfile['error']){
+        if ($customerProfile['error']) {
             $cPlugin->PaymentRejected($this->user->lang("There was an error performing this operation.").' '.$customerProfile['detail']);
             return $this->user->lang("There was an error performing this operation.").' '.$customerProfile['detail'];
-        }else{
+        } else {
             // 00 - Approved or completed successfully
             // 11 - Approved (VIP)
             // 10 - Approved, partial amount approved
-            if(in_array($customerProfile['ResponseCode'], array('00', '11', '10'))){
-                if(in_array($customerProfile['ResponseCode'], array('00', '11'))){
+            if (in_array($customerProfile['ResponseCode'], array('00', '11', '10'))) {
+                if (in_array($customerProfile['ResponseCode'], array('00', '11'))) {
                     // 00 - Approved or completed successfully
                     // 11 - Approved (VIP)
                     $amount = $customerProfile['amount'];
-                }elseif($customerProfile['ResponseCode'] === '10'){
+                } elseif ($customerProfile['ResponseCode'] === '10') {
                     // 10 - Approved, partial amount approved
                     //Transaction's total amount in US dollars. Format assumes 2 decimal points.
-                    $amount = number_format((intval($customerProfile['TransactionAmount'])/100),2);
+                    $amount = number_format((intval($customerProfile['TransactionAmount'])/100), 2);
                 }
 
-                if($isRefund){
+                if ($isRefund) {
                     $cPlugin->PaymentAccepted($amount, "Buypass refund of {$amount} was successfully processed.", $customerProfile['ReferenceNumber']);
                     return array('AMOUNT' => $amount);
-                }else{
+                } else {
                     $cPlugin->setTransactionID($customerProfile['ReferenceNumber']);
                     $cPlugin->PaymentAccepted($amount, "Buypass payment of {$amount} was accepted. Auth Identification Response: {$customerProfile['AuthIdentificationResponse']}", $customerProfile['ReferenceNumber']);
                     return '';
                 }
-            }else{
+            } else {
                 $cPlugin->PaymentRejected($this->user->lang("There was an error performing this operation.").' *Response Code: '.$customerProfile['ResponseCode']);
                 return $this->user->lang("There was an error performing this operation.").' *Response Code: '.$customerProfile['ResponseCode'];
             }
@@ -183,7 +188,7 @@ class PluginBuypass extends GatewayPlugin
         $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
         $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
-        try{
+        try {
             // Process the transaction
             $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
 
@@ -208,7 +213,7 @@ class PluginBuypass extends GatewayPlugin
             //Max Size: 2
             //Credit card expiration year in YY format.
             //Exactly two characters required; for example, 09.
-            $buypass->setParameter('ExpirationYear', substr(trim($params['cc_exp_year']), 2 , 2), 2);
+            $buypass->setParameter('ExpirationYear', substr(trim($params['cc_exp_year']), 2, 2), 2);
 
             //Max Size: 40
             //Card holder first name.
@@ -240,27 +245,27 @@ class PluginBuypass extends GatewayPlugin
 
             $buypass->createToken();
 
-            if($buypass->isSuccessful()){
+            if ($buypass->isSuccessful()) {
                 //Token identifying the card number to process
                 $profile_id = $buypass->getToken();
                 $Billing_Profile_ID = '';
                 $profile_id_array = array();
                 $user = new User($params['CustomerID']);
-                if($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != ''){
+                if ($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != '') {
                     $profile_id_array = unserialize($Billing_Profile_ID);
                 }
-                if(!is_array($profile_id_array)){
+                if (!is_array($profile_id_array)) {
                     $profile_id_array = array();
                 }
-                $profile_id_array['buypass'] = $profile_id;
+                $profile_id_array[basename(dirname(__FILE__))] = $profile_id;
                 $user->updateCustomTag('Billing-Profile-ID', serialize($profile_id_array));
                 $user->save();
-                
+
                 return array(
                     'error'               => false,
                     'profile_id'          => $profile_id
                 );
-            }else{
+            } else {
                 return array(
                     'error'  => true,
 
@@ -268,7 +273,7 @@ class PluginBuypass extends GatewayPlugin
                     'detail' => $buypass->getResultMessage()
                 );
             }
-        }catch(BuypassException $e){
+        } catch (BuypassException $e) {
             return array(
                 'error'  => true,
                 'detail' => $e
@@ -276,13 +281,16 @@ class PluginBuypass extends GatewayPlugin
         }
     }
 
-    function UpdateGateway($params){
-        switch($params['Action']){
+    function UpdateGateway($params)
+    {
+        switch ($params['Action']) {
             case 'update':  // When updating customer profile or changing to use this gateway
                 $statusAliasGateway = StatusAliasGateway::getInstance($this->user);
-                if(in_array($params['Status'], $statusAliasGateway->getUserStatusIdsFor(array(USER_STATUS_INACTIVE, USER_STATUS_CANCELLED, USER_STATUS_FRAUD)))){
-                  $this->CustomerRemove($params);
+
+                if (in_array($params['Status'], $statusAliasGateway->getUserStatusIdsFor(array(USER_STATUS_INACTIVE, USER_STATUS_CANCELLED, USER_STATUS_FRAUD)))) {
+                    $this->CustomerRemove($params);
                 }
+
                 break;
             case 'delete':  // When deleting the customer, changing to use another gateway, or updating the Credit Card
                 $this->CustomerRemove($params);
@@ -290,31 +298,36 @@ class PluginBuypass extends GatewayPlugin
         }
     }
 
-    function CustomerRemove($params){
-        $profile_id = '';
-        $Billing_Profile_ID = '';
-        $profile_id_array = array();
-        $user = new User($params['User ID']);
-        if($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != ''){
-            $profile_id_array = unserialize($Billing_Profile_ID);
-            if(is_array($profile_id_array) && isset($profile_id_array['buypass'])){
-                $profile_id = $profile_id_array['buypass'];
+    function CustomerRemove($params)
+    {
+        try {
+            require_once 'modules/clients/models/Client_EventLog.php';
+
+            $profile_id = '';
+            $Billing_Profile_ID = '';
+            $profile_id_array = array();
+            $user = new User($params['User ID']);
+
+            if ($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != '') {
+                $profile_id_array = unserialize($Billing_Profile_ID);
+
+                if (is_array($profile_id_array) && isset($profile_id_array[basename(dirname(__FILE__))])) {
+                    $profile_id = $profile_id_array[basename(dirname(__FILE__))];
+                }
             }
-        }
 
-        if($profile_id != ''){
-            //Buypass Credentials from CE plugin
-            $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
-            $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
-            $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
-            $TestURL = $this->settings->get('plugin_buypass_Buypass Test URL');
-            $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
-            $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
-            $TerminalID = $this->settings->get('plugin_buypass_Buypass Terminal ID');
-            $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
-            $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
+            if ($profile_id != '') {
+                //Buypass Credentials from CE plugin
+                $UserID = $this->settings->get('plugin_buypass_Buypass User ID');
+                $GatewayID = $this->settings->get('plugin_buypass_Buypass Gateway ID');
+                $LiveURL = $this->settings->get('plugin_buypass_Buypass Live URL');
+                $TestURL = $this->settings->get('plugin_buypass_Buypass Test URL');
+                $sandbox = $this->settings->get('plugin_buypass_Buypass Test Mode');
+                $USE_DEVELOPMENT_SERVER = ($sandbox)? Buypass::USE_DEVELOPMENT_SERVER : Buypass::USE_PRODUCTION_SERVER;
+                $TerminalID = $this->settings->get('plugin_buypass_Buypass Terminal ID');
+                $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
+                $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
-            try{
                 // Process the transaction
                 $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
 
@@ -332,37 +345,51 @@ class PluginBuypass extends GatewayPlugin
 
                 $buypass->deleteToken();
 
-                if(is_array($profile_id_array)){
-                    unset($profile_id_array['buypass']);
-                }else{
-                    $profile_id_array = array();
-                }
-                $user->updateCustomTag('Billing-Profile-ID', serialize($profile_id_array));
-                $user->save();
+                if ($buypass->isSuccessful()) {
+                    if (is_array($profile_id_array)) {
+                        unset($profile_id_array[basename(dirname(__FILE__))]);
+                    } else {
+                        $profile_id_array = array();
+                    }
 
-                if($buypass->isSuccessful()){
+                    $user->updateCustomTag('Billing-Profile-ID', serialize($profile_id_array));
+                    $user->save();
+
+                    $eventLog = Client_EventLog::newInstance(false, $user->getId(), $user->getId());
+                    $eventLog->setSubject($this->user->getId());
+                    $eventLog->setAction(CLIENT_EVENTLOG_DELETEDBILLINGPROFILEID);
+                    $params = array(
+                        'paymenttype' => $this->settings->get("plugin_".basename(dirname(__FILE__))."_Plugin Name"),
+                        'profile_id' => $profile_id
+                    );
+                    $eventLog->setParams(serialize($params));
+                    $eventLog->save();
+
                     return array(
                         'error'      => false,
                         'profile_id' => $profile_id
                     );
-                }else{
+                } else {
                     return array(
                         'error'  => true,
-
-                        //Result Message. Can have details of the error.
-                        'detail' => $buypass->getResultMessage()
+                        'detail' => $this->user->lang("There was an error performing this operation."." ".$buypass->getResultMessage())    //Result Message. Can have details of the error.
                     );
                 }
-            }catch(BuypassException $e){
+            } else {
                 return array(
                     'error'  => true,
-                    'detail' => $e
+                    'detail' => $this->user->lang("There was an error performing this operation.")." ".$this->user->lang("profile_id is empty.")
                 );
             }
-        }else{
+        } catch (BuypassException $e) {
             return array(
                 'error'  => true,
-                'detail' => $this->user->lang("There was an error performing this operation.").' '.$this->user->lang("profile_id is empty.")
+                'detail' => $this->user->lang("There was an error performing this operation.")." ".$e
+            );
+        } catch (Exception $e) {
+            return array(
+                'error'  => true,
+                'detail' => $this->user->lang("There was an error performing this operation.")." ".$e->getMessage()
             );
         }
     }
@@ -374,18 +401,18 @@ class PluginBuypass extends GatewayPlugin
         $Billing_Profile_ID = '';
         $profile_id_array = array();
         $user = new User($params['CustomerID']);
-        if($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != ''){
+        if ($user->getCustomFieldsValue('Billing-Profile-ID', $Billing_Profile_ID) && $Billing_Profile_ID != '') {
             $profile_id_array = unserialize($Billing_Profile_ID);
-            if(is_array($profile_id_array) && isset($profile_id_array['buypass'])){
-                $profile_id = $profile_id_array['buypass'];
+            if (is_array($profile_id_array) && isset($profile_id_array[basename(dirname(__FILE__))])) {
+                $profile_id = $profile_id_array[basename(dirname(__FILE__))];
             }
         }
 
-        if($profile_id == ''){
+        if ($profile_id == '') {
             $params['cc_exp_month'] = sprintf("%02d", $user->getCCMonth());
             $params['cc_exp_year'] = $user->getCCYEAR();
             return $this->createFullCustomerProfile($params);
-        }else{
+        } else {
             return array(
                 'error'               => false,
                 'profile_id'          => $profile_id
@@ -398,9 +425,9 @@ class PluginBuypass extends GatewayPlugin
     {
         //Get customer Buypass payment profile
         $customerProfile = $this->getCustomerProfile($params);
-        if($customerProfile['error']){
+        if ($customerProfile['error']) {
             return $customerProfile;
-        }else{
+        } else {
             $profile_id = $customerProfile['profile_id'];
         }
 
@@ -418,7 +445,7 @@ class PluginBuypass extends GatewayPlugin
         $Platform = $this->settings->get('plugin_buypass_Buypass Platform');
         $ApplicationID = $this->settings->get('plugin_buypass_Buypass Application ID');
 
-        try{
+        try {
             // Process the transaction
             $buypass = new Buypass($UserID, $GatewayID, $LiveURL, $TestURL, $USE_DEVELOPMENT_SERVER);
 
@@ -455,14 +482,14 @@ class PluginBuypass extends GatewayPlugin
             //Buypass currently only supports the recurring payment indicator for Visa and MasterCard transactions.
             $buypass->setParameter('Recurring', '0', 1);
 
-            if($isRefund){
+            if ($isRefund) {
                 $buypass->processRefund();
-            }else{
+            } else {
                 $buypass->processPayment();
             }
 
             // Get the payment or refund profile ID returned from the request
-            if($buypass->isSuccessful()){
+            if ($buypass->isSuccessful()) {
                 return array(
                     'error'                      => false,
 
@@ -483,7 +510,7 @@ class PluginBuypass extends GatewayPlugin
 
                     'amount'                     => $amount
                 );
-            }else{
+            } else {
                 //Result Code. Can have details of the error.
                 $ResultCode = $buypass->getResultCode();
 
@@ -497,7 +524,7 @@ class PluginBuypass extends GatewayPlugin
                     'detail' => '*Result Code: '.$ResultCode.' *Response Code: '.$ResponseCode.' *Additional Response Data: '.$AdditionalResponseData
                 );
             }
-        }catch(BuypassException $e){
+        } catch (BuypassException $e) {
             return array(
                 'error'  => true,
                 'detail' => $e
@@ -505,4 +532,3 @@ class PluginBuypass extends GatewayPlugin
         }
     }
 }
-?>

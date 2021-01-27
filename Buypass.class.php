@@ -1,6 +1,8 @@
-﻿<?php
+<?php
 
-class BuypassException extends Exception {}
+class BuypassException extends Exception
+{
+}
 
 class Buypass
 {
@@ -39,14 +41,14 @@ class Buypass
     {
         $this->UserID    = trim($UserID);
         $this->GatewayID = trim($GatewayID);
-        if(empty($this->UserID) || empty($this->GatewayID)){
+        if (empty($this->UserID) || empty($this->GatewayID)) {
             trigger_error('You have not configured your ' . __CLASS__ . '() login credentials properly.', E_USER_ERROR);
         }
 
         $this->test = (bool) $test;
-        if($this->test){
+        if ($this->test) {
             $this->url = $TestURL;
-        }else{
+        } else {
             $this->url = $LiveURL;
         }
 
@@ -68,45 +70,45 @@ class Buypass
 
     public function __destruct()
     {
-        if(isset($this->ch)){
+        if (isset($this->ch)) {
             curl_close($this->ch);
         }
     }
 
     public function __toString()
     {
-        if(!$this->params){
+        if (!$this->params) {
             return (string) $this;
         }
         $output  = '<table summary="Buypass Results" id="buypass" border="1" style="border-collapse: collapse">' . "\n";
         $output .= '<tr>' . "\n\t\t" . '<th colspan="2"><b>Outgoing Parameters</b></th>' . "\n" . '</tr>' . "\n";
 
-        if(!empty($this->xml)){
+        if (!empty($this->xml)) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>UserID</b></td>';
             $output .= '<td>' . $this->UserID . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        if(!empty($this->GatewayID)){
+        if (!empty($this->GatewayID)) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>GatewayID</b></td>';
             $output .= '<td>' . $this->GatewayID . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        foreach($this->params as $key => $value){
+        foreach ($this->params as $key => $value) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>' . $key . '</b></td>';
             $output .= '<td>' . $value . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        if(!empty($this->url) || !empty($this->requesturl)){
+        if (!empty($this->url) || !empty($this->requesturl)) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>URL</b></td>';
             $output .= '<td>' . htmlentities($this->url.$this->requesturl) . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        if(!empty($this->xml)){
+        if (!empty($this->xml)) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>XML REQUEST</b></td>';
             $output .= '<td>' . nl2br(str_replace(array(' ', '&lt;', '&gt;'), array('&nbsp;', '</b>&lt;', '&gt;<b>'), htmlentities($this->xml))) . '</td>' . "\n" . '</tr>' . "\n";
         }
 
-        if(!empty($this->response)){
+        if (!empty($this->response)) {
             $output .= "\t" . '<tr>' . "\n\t\t" . '<td><b>XML RESPONSE</b></td>';
             $output .= '<td>' . nl2br(str_replace(array(' ', '&gt;&lt;', '&lt;', '&gt;'), array('&nbsp;', '&gt;</br>&lt;', '</b>&lt;', '&gt;<b>'), htmlentities($this->response))) . '</td>' . "\n" . '</tr>' . "\n";
         }
@@ -135,18 +137,18 @@ class Buypass
         ));
 
         $this->response = curl_exec($this->ch);
-        if($this->response){
+        if ($this->response) {
             $this->parseResults();
-            if($this->Status === '0'){
+            if ($this->Status === '0') {
                 $this->success = true;
                 $this->error   = false;
-            }else{
+            } else {
                 $this->success = false;
                 $this->error   = true;
             }
             curl_close($this->ch);
             unset($this->ch);
-        }else{
+        } else {
             throw new BuypassException('Connection error: ' . curl_error($this->ch) . ' (' . curl_errno($this->ch) . ')', self::EXCEPTION_CURL);
         }
     }
@@ -256,22 +258,22 @@ class Buypass
     public function setParameter($field = '', $value = null, $length = null)
     {
         $field = (is_string($field)) ? trim($field) : $field;
-        if(is_string($value)){
+        if (is_string($value)) {
             $value = trim($value);
-            if(!is_null($length)){
-                $value = substr($value, 0 , $length);
+            if (!is_null($length)) {
+                $value = substr($value, 0, $length);
             }
         }
-        if(!is_string($field)){
+        if (!is_string($field)) {
             trigger_error(__METHOD__ . '() arg 1 must be a string: ' . gettype($field) . ' given.', E_USER_ERROR);
         }
-        if(empty($field)){
+        if (empty($field)) {
             trigger_error(__METHOD__ . '() requires a parameter field to be named.', E_USER_ERROR);
         }
-        if(!is_string($value) && !is_numeric($value) && !is_bool($value)){
+        if (!is_string($value) && !is_numeric($value) && !is_bool($value)) {
             trigger_error(__METHOD__ . '() arg 2 (' . $field . ') must be a string, integer, or boolean value: ' . gettype($value) . ' given.', E_USER_ERROR);
         }
-        if($value === '' || is_null($value)){
+        if ($value === '' || is_null($value)) {
             trigger_error(__METHOD__ . '() parameter "value" is empty or missing (parameter: ' . $field . ').', E_USER_NOTICE);
         }
         $this->params[$field] = $value;
@@ -377,4 +379,3 @@ class Buypass
         return $this->Receipt;
     }
 }
-?>
